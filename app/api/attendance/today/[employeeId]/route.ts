@@ -6,6 +6,13 @@ export async function GET(
   { params }: { params: { employeeId: string } }
 ) {
   try {
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json(
+        { error: 'MongoDB not configured. Please set MONGODB_URI environment variable.' },
+        { status: 500 }
+      );
+    }
+
     const { employeeId } = params;
     const db = await getDatabase();
     const today = new Date().toISOString().split('T')[0];

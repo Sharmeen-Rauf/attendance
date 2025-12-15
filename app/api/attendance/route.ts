@@ -3,6 +3,13 @@ import { getDatabase } from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json(
+        { error: 'MongoDB not configured. Please set MONGODB_URI environment variable.' },
+        { status: 500 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get('employee_id');
     const filterDate = searchParams.get('date');

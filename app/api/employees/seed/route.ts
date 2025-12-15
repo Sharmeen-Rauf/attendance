@@ -3,6 +3,13 @@ import { getDatabase } from '@/lib/mongodb';
 
 export async function POST() {
   try {
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json(
+        { error: 'MongoDB not configured. Please set MONGODB_URI environment variable.' },
+        { status: 500 }
+      );
+    }
+
     const db = await getDatabase();
     const employees = [
       { id: 'EMP001', name: 'John Doe', email: 'john@company.com' },
