@@ -154,19 +154,47 @@ export async function POST(request: NextRequest) {
 
     // Save record
     if (existingRecord) {
-      await db.collection('attendance_records').updateOne(
+      const updateResult = await db.collection('attendance_records').updateOne(
         { _id: existingRecord._id },
         { $set: record }
       );
+      if (updateResult.modifiedCount === 0) {
+        console.warn('No record was modified during update');
+      }
     } else {
-      await db.collection('attendance_records').insertOne(record);
+      const insertResult = await db.collection('attendance_records').insertOne(record);
+      record._id = insertResult.insertedId;
     }
 
-    return NextResponse.json(record, { status: 201 });
+    // Return formatted response
+    return NextResponse.json({
+      id: record.id,
+      employeeId: record.employee_id,
+      employeeName: record.employee_name,
+      date: record.date,
+      checkInTime: record.check_in_time ? new Date(record.check_in_time).toISOString() : null,
+      checkOutTime: record.check_out_time ? new Date(record.check_out_time).toISOString() : null,
+      breakInTime: record.break_in_time ? new Date(record.break_in_time).toISOString() : null,
+      breakOutTime: record.break_out_time ? new Date(record.break_out_time).toISOString() : null,
+      status: record.status,
+      breakDuration: record.break_duration,
+    }, { status: 201 });
   } catch (error: any) {
     console.error('Error submitting attendance:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to submit attendance';
+    if (error.message) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to submit attendance' },
+      { 
+        error: errorMessage,
+        details: error.toString()
+      },
       { status: 500 }
     );
   }

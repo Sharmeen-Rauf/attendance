@@ -78,7 +78,12 @@ export const syncPendingAttendances = async (): Promise<number> => {
   }
 
   const pending = getPendingAttendances().filter(item => !item.synced);
+  if (pending.length === 0) {
+    return 0;
+  }
+
   let syncedCount = 0;
+  const errors: string[] = [];
 
   for (const item of pending) {
     try {
@@ -89,15 +94,30 @@ export const syncPendingAttendances = async (): Promise<number> => {
         timestamp: item.serverTime || item.timestamp,
       };
       
-      await api.post('/api/attendance/submit', payload);
-      markAsSynced(item.id);
-      syncedCount++;
-    } catch (error) {
+      const response = await api.post('/api/attendance/submit', payload);
+      
+      // Only mark as synced if server returns success
+      if (response.status === 201 || response.status === 200) {
+        markAsSynced(item.id);
+        syncedCount++;
+      } else {
+        errors.push(`Failed to sync ${item.action} for ${item.employeeName}`);
+      }
+    } catch (error: any) {
       console.error('Error syncing attendance:', error);
+      const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
+      errors.push(`Failed to sync ${item.action} for ${item.employeeName}: ${errorMsg}`);
     }
   }
 
+  // Remove successfully synced items
   removeSyncedItems();
+  
+  // Log errors if any
+  if (errors.length > 0) {
+    console.warn('Sync errors:', errors);
+  }
+
   return syncedCount;
 };
 

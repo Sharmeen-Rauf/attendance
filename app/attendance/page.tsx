@@ -40,7 +40,13 @@ export default function AttendancePage() {
         if (count > 0) {
           setMessage({ type: 'success', text: `${count} record(s) synced successfully!` });
           setTimeout(() => setMessage(null), 3000);
+          // Reload status after sync
+          if (employeeId) {
+            loadTodayStatus();
+          }
         }
+      }).catch(error => {
+        console.error('Sync error:', error);
       });
     };
     
@@ -54,7 +60,13 @@ export default function AttendancePage() {
 
     // Sync on mount
     if (navigator.onLine) {
-      syncPendingAttendances();
+      syncPendingAttendances().then(count => {
+        if (count > 0 && employeeId) {
+          loadTodayStatus();
+        }
+      }).catch(error => {
+        console.error('Initial sync error:', error);
+      });
     }
 
     return () => {
@@ -67,8 +79,17 @@ export default function AttendancePage() {
   useEffect(() => {
     if (employeeId) {
       loadTodayStatus();
+      // Also check for pending syncs
+      const pending = getPendingAttendances().filter(item => !item.synced && item.employeeId === employeeId);
+      if (pending.length > 0 && online) {
+        syncPendingAttendances().then(count => {
+          if (count > 0) {
+            loadTodayStatus();
+          }
+        });
+      }
     }
-  }, [employeeId]);
+  }, [employeeId, online]);
 
   const checkAuth = async () => {
     try {
@@ -132,11 +153,14 @@ export default function AttendancePage() {
     setMessage(null);
 
     try {
-      await submitAttendance(employeeId, employeeName, action);
+      const result = await submitAttendance(employeeId, employeeName, action);
       
       if (isOnline()) {
         setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
-        await loadTodayStatus();
+        // Reload status after successful submission
+        setTimeout(async () => {
+          await loadTodayStatus();
+        }, 500);
       } else {
         const pending = getPendingAttendances();
         setMessage({ 
@@ -147,6 +171,7 @@ export default function AttendancePage() {
       
       setTimeout(() => setMessage(null), 3000);
     } catch (error: any) {
+      console.error('Attendance submission error:', error);
       if (error.message === 'OFFLINE') {
         const pending = getPendingAttendances();
         setMessage({ 
@@ -155,8 +180,12 @@ export default function AttendancePage() {
         });
         setTimeout(() => setMessage(null), 5000);
       } else {
-        setMessage({ type: 'error', text: 'Failed to record attendance. Please try again.' });
-        setTimeout(() => setMessage(null), 3000);
+        const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
+        setMessage({ 
+          type: 'error', 
+          text: `Failed to record attendance: ${errorMsg}. Please try again.` 
+        });
+        setTimeout(() => setMessage(null), 5000);
       }
     } finally {
       setLoading(false);
@@ -194,9 +223,28 @@ export default function AttendancePage() {
       {!online && (
         <div className="offline-indicator">📴 Offline Mode</div>
       )}
-      {online && getPendingAttendances().length > 0 && (
-        <div className="sync-indicator">🔄 Syncing...</div>
-      )}
+      {(() => {
+        const pending = getPendingAttendances().filter(item => !item.synced);
+        if (pending.length > 0) {
+          return (
+            <div 
+              className="sync-indicator" 
+              onClick={async () => {
+                const count = await syncPendingAttendances();
+                if (count > 0) {
+                  setMessage({ type: 'success', text: `${count} record(s) synced!` });
+                  setTimeout(() => setMessage(null), 3000);
+                  await loadTodayStatus();
+                }
+              }} 
+              style={{ cursor: 'pointer' }}
+            >
+              🔄 {pending.length} pending - Click to sync
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ margin: 0 }}>📋 Attendance System</h1>
