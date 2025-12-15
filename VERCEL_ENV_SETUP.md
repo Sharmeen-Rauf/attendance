@@ -4,10 +4,20 @@
 
 When deploying to Vercel, you need to add your MongoDB connection string as an environment variable.
 
-### Your MongoDB Connection String:
+### Get Your MongoDB Connection String:
+
+1. Go to MongoDB Atlas: https://mongodb.com/cloud/atlas
+2. Click "Connect" on your cluster
+3. Choose "Connect your application"
+4. Copy the connection string
+5. Replace `<password>` with your database user password
+
+**Example format:**
 ```
-mongodb+srv://Backend_Project_Database:backend_project_database123@cluster0.wqsxt7b.mongodb.net/?appName=Cluster0
+mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
 ```
+
+⚠️ **Never commit your connection string to GitHub!**
 
 ## Steps to Add in Vercel:
 
@@ -22,7 +32,7 @@ mongodb+srv://Backend_Project_Database:backend_project_database123@cluster0.wqsx
 3. **Add New Variable**
    - Click "Add New" button
    - **Key**: `MONGODB_URI`
-   - **Value**: `mongodb+srv://Backend_Project_Database:backend_project_database123@cluster0.wqsxt7b.mongodb.net/?appName=Cluster0`
+   - **Value**: (paste your MongoDB connection string here - get it from MongoDB Atlas)
 
 4. **Select Environments**
    - ✅ Production

@@ -1,12 +1,18 @@
 # ⚡ Quick Deploy to Vercel (3 Steps!)
 
-## Step 1: MongoDB Connection String ✅
+## Step 1: Get MongoDB Connection String (2 minutes)
 
-**You already have your MongoDB connection string!**
+1. Go to https://mongodb.com/cloud/atlas
+2. Sign up (free) or log in
+3. Create cluster → Click "Connect"
+4. Choose "Connect your application"
+5. Copy connection string
+6. Replace `<password>` with your database user password
+7. **Save it securely!** You'll need it in Step 3
 
-Your connection string:
+**Example format:**
 ```
-mongodb+srv://Backend_Project_Database:backend_project_database123@cluster0.wqsxt7b.mongodb.net/?appName=Cluster0
+mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
 ```
 
 **Important:** Make sure in MongoDB Atlas:
@@ -31,7 +37,7 @@ git push -u origin main
 4. Go to Settings → Environment Variables
 5. Add new variable:
    - **Key**: `MONGODB_URI`
-   - **Value**: `mongodb+srv://Backend_Project_Database:backend_project_database123@cluster0.wqsxt7b.mongodb.net/?appName=Cluster0`
+   - **Value**: (paste your MongoDB connection string here)
    - ✅ Check Production, Preview, and Development
 6. Click "Save" and redeploy
 

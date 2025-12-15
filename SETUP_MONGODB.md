@@ -1,15 +1,24 @@
-# 🔧 MongoDB Setup Complete!
+# 🔧 MongoDB Setup Guide
 
-## Your Connection String
+## Get Your Connection String
 
-Your MongoDB connection string has been configured:
+1. Go to MongoDB Atlas: https://mongodb.com/cloud/atlas
+2. Click "Connect" on your cluster
+3. Choose "Connect your application"
+4. Copy the connection string
+5. Replace `<password>` with your database user password
+
+**Example format:**
 ```
-mongodb+srv://Backend_Project_Database:backend_project_database123@cluster0.wqsxt7b.mongodb.net/?appName=Cluster0
+mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
 ```
 
 ## ✅ Local Development
 
-The connection string is already saved in `.env.local` file.
+Create a `.env.local` file in the root directory with:
+```
+MONGODB_URI=your_mongodb_connection_string_here
+```
 
 **To test locally:**
 
@@ -34,7 +43,7 @@ When deploying to Vercel, add this environment variable:
 2. Settings → Environment Variables
 3. Add new variable:
    - **Name**: `MONGODB_URI`
-   - **Value**: `mongodb+srv://Backend_Project_Database:backend_project_database123@cluster0.wqsxt7b.mongodb.net/?appName=Cluster0`
+   - **Value**: (paste your MongoDB connection string from MongoDB Atlas)
 4. Make sure to add it for:
    - ✅ Production
    - ✅ Preview
