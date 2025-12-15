@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import { getEmployeeConfig } from '@/lib/employeeConfig';
 
 export async function GET(
   request: NextRequest,
@@ -22,12 +23,18 @@ export async function GET(
       date: today
     });
 
+    const config = getEmployeeConfig(employeeId);
+    
     if (!record) {
       return NextResponse.json({
         checkInTime: null,
         checkOutTime: null,
         breakInTime: null,
         breakOutTime: null,
+        status: null,
+        officeStartTime: config?.officeStartTime || '09:00',
+        officeEndTime: config?.officeEndTime || '17:00',
+        flexibleStart: config?.flexibleStart || false,
       });
     }
 
@@ -36,6 +43,10 @@ export async function GET(
       checkOutTime: record.check_out_time ? new Date(record.check_out_time).toISOString() : null,
       breakInTime: record.break_in_time ? new Date(record.break_in_time).toISOString() : null,
       breakOutTime: record.break_out_time ? new Date(record.break_out_time).toISOString() : null,
+      status: record.status || 'on_time',
+      officeStartTime: config?.officeStartTime || '09:00',
+      officeEndTime: config?.officeEndTime || '17:00',
+      flexibleStart: config?.flexibleStart || false,
     });
   } catch (error: any) {
     console.error('Error fetching today status:', error);

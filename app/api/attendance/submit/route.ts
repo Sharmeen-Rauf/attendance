@@ -1,32 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { randomUUID } from 'crypto';
-
-const OFFICE_START_TIME = '09:00:00';
-const GRACE_PERIOD_MINUTES = 10;
-const MAX_BREAK_DURATION_MINUTES = 30;
-
-function calculateStatus(checkInTime: Date): string {
-  const checkIn = new Date(checkInTime);
-  const officeTime = new Date(checkIn);
-  const [hours, minutes] = OFFICE_START_TIME.split(':').map(Number);
-  officeTime.setHours(hours, minutes, 0, 0);
-  
-  const graceEnd = new Date(officeTime);
-  graceEnd.setMinutes(graceEnd.getMinutes() + GRACE_PERIOD_MINUTES);
-  
-  if (checkIn <= officeTime) {
-    return 'on_time';
-  } else if (checkIn <= graceEnd) {
-    return 'grace';
-  } else {
-    return 'late';
-  }
-}
+import { getEmployeeConfig, calculateStatus } from '@/lib/employeeConfig';
 
 function calculateBreakDuration(breakInTime: Date | null, breakOutTime: Date | null): number | null {
   if (!breakInTime || !breakOutTime) return null;
   return Math.floor((new Date(breakOutTime).getTime() - new Date(breakInTime).getTime()) / 1000);
+}
+
+function validateBreakDuration(breakDurationSeconds: number, config: any): boolean {
+  const maxBreakSeconds = config.maxBreakDurationMinutes * 60;
+  return breakDurationSeconds <= maxBreakSeconds;
 }
 
 export async function POST(request: NextRequest) {
@@ -44,6 +28,15 @@ export async function POST(request: NextRequest) {
     if (!employeeId || !employeeName || !action || !timestamp) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Get employee configuration
+    const employeeConfig = getEmployeeConfig(employeeId);
+    if (!employeeConfig) {
+      return NextResponse.json(
+        { error: 'Employee configuration not found' },
         { status: 400 }
       );
     }
@@ -88,7 +81,7 @@ export async function POST(request: NextRequest) {
         );
       }
       record.check_in_time = timestampDate;
-      record.status = calculateStatus(timestampDate);
+      record.status = calculateStatus(timestampDate, employeeConfig);
     } else if (action === 'checkout') {
       if (!record.check_in_time) {
         return NextResponse.json(
@@ -144,6 +137,12 @@ export async function POST(request: NextRequest) {
       }
       record.break_out_time = timestampDate;
       record.break_duration = calculateBreakDuration(record.break_in_time, record.break_out_time);
+      
+      // Validate break duration
+      if (record.break_duration && !validateBreakDuration(record.break_duration, employeeConfig)) {
+        // Still save but will be flagged in reports
+        console.warn(`Break duration ${record.break_duration}s exceeds max ${employeeConfig.maxBreakDurationMinutes * 60}s for ${employeeName}`);
+      }
     } else {
       return NextResponse.json(
         { error: 'Invalid action' },

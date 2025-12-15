@@ -158,20 +158,9 @@ export default function AttendancePage() {
   const getStatusBadge = () => {
     if (!checkInTime) return null;
     
-    const checkIn = new Date(checkInTime);
-    const officeTime = new Date(checkIn);
-    officeTime.setHours(9, 0, 0, 0);
-    
-    const graceTime = new Date(officeTime);
-    graceTime.setMinutes(graceTime.getMinutes() + 10);
-    
-    if (checkIn <= officeTime) {
-      return <span className="status-badge status-on-time">🟢 On Time</span>;
-    } else if (checkIn <= graceTime) {
-      return <span className="status-badge status-grace">🟡 Grace Period</span>;
-    } else {
-      return <span className="status-badge status-late">🔴 Late</span>;
-    }
+    // Status is calculated server-side based on employee-specific timings
+    // Display will be updated when we fetch today's status from API
+    return <span className="status-badge status-on-time">✓ Checked In</span>;
   };
 
   return (
@@ -214,6 +203,13 @@ export default function AttendancePage() {
           <span className="info-label">Time:</span>
           <span className="info-value">{currentTime}</span>
         </div>
+
+        {getEmployeeTiming() && (
+          <div className="info-row">
+            <span className="info-label">Office Hours:</span>
+            <span className="info-value">{getEmployeeTiming()}</span>
+          </div>
+        )}
 
         {checkInTime && (
           <div className="info-row">

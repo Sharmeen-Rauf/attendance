@@ -118,7 +118,16 @@ export const getTodayStatus = async (employeeId: string): Promise<any> => {
     const response = await api.get(`/api/attendance/today/${employeeId}`);
     return response.data;
   } catch (error) {
-    return null;
+    return {
+      checkInTime: null,
+      checkOutTime: null,
+      breakInTime: null,
+      breakOutTime: null,
+      status: null,
+      officeStartTime: '09:00',
+      officeEndTime: '17:00',
+      flexibleStart: false,
+    };
   }
 };
 

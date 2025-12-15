@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import { EMPLOYEE_CONFIGS } from '@/lib/employeeConfig';
 
 export async function GET() {
   try {
@@ -13,11 +14,19 @@ export async function GET() {
     const db = await getDatabase();
     const employees = await db.collection('employees').find({}).toArray();
     
-    return NextResponse.json(employees.map(emp => ({
-      id: emp.id || emp._id,
-      name: emp.name,
-      email: emp.email || null
-    })));
+    // Merge with config to include timing info
+    return NextResponse.json(employees.map(emp => {
+      const config = EMPLOYEE_CONFIGS[emp.id || emp._id];
+      return {
+        id: emp.id || emp._id,
+        name: emp.name,
+        email: emp.email || null,
+        officeStartTime: config?.officeStartTime || '09:00',
+        officeEndTime: config?.officeEndTime || '17:00',
+        flexibleStart: config?.flexibleStart || false,
+        requiredHours: config?.requiredHours || 8
+      };
+    }));
   } catch (error: any) {
     console.error('Error fetching employees:', error);
     return NextResponse.json(

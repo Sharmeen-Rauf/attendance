@@ -12,11 +12,11 @@ export async function POST() {
 
     const db = await getDatabase();
     const employees = [
-      { id: 'EMP001', name: 'John Doe', email: 'john@company.com' },
-      { id: 'EMP002', name: 'Jane Smith', email: 'jane@company.com' },
-      { id: 'EMP003', name: 'Mike Johnson', email: 'mike@company.com' },
-      { id: 'EMP004', name: 'Sarah Williams', email: 'sarah@company.com' },
-      { id: 'EMP005', name: 'David Brown', email: 'david@company.com' },
+      { id: 'MUH001', name: 'Muhammad Umar', email: 'umar@company.com' },
+      { id: 'MUH002', name: 'Muhammad Hassan', email: 'hassan@company.com' },
+      { id: 'MUH003', name: 'Muhammad Hamdan', email: 'hamdan@company.com' },
+      { id: 'SHA001', name: 'Sharmeen Rauf', email: 'sharmeen@company.com' },
+      { id: 'RAB001', name: 'Rabia', email: 'rabia@company.com' },
     ];
 
     const result = await db.collection('employees').insertMany(employees);
