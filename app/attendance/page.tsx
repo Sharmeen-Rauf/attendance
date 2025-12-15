@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { submitAttendance, getServerTime, isOnline, syncPendingAttendances, getEmployees, getTodayStatus } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { submitAttendance, getServerTime, isOnline, syncPendingAttendances, getTodayStatus } from '@/lib/api';
 import { getPendingAttendances } from '@/lib/offlineStorage';
 import { format } from 'date-fns';
+import axios from 'axios';
 
 export default function AttendancePage() {
+  const router = useRouter();
   const [employeeId, setEmployeeId] = useState('');
   const [employeeName, setEmployeeName] = useState('');
-  const [employees, setEmployees] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [online, setOnline] = useState(true);
@@ -19,10 +21,13 @@ export default function AttendancePage() {
   const [breakInTime, setBreakInTime] = useState<string | null>(null);
   const [canBreakOut, setCanBreakOut] = useState(false);
   const [canCheckOut, setCanCheckOut] = useState(false);
+  const [officeStartTime, setOfficeStartTime] = useState('09:00');
+  const [officeEndTime, setOfficeEndTime] = useState('17:00');
+  const [flexibleStart, setFlexibleStart] = useState(false);
 
   useEffect(() => {
-    // Load employees
-    loadEmployees();
+    // Check if user is logged in
+    checkAuth();
     
     // Update time every second
     updateTime();
@@ -65,12 +70,23 @@ export default function AttendancePage() {
     }
   }, [employeeId]);
 
-  const loadEmployees = async () => {
-    const empList = await getEmployees();
-    setEmployees(empList);
-    if (empList.length > 0 && !employeeId) {
-      setEmployeeId(empList[0].id);
-      setEmployeeName(empList[0].name);
+  const checkAuth = async () => {
+    try {
+      const response = await axios.get('/api/auth/me', {
+        withCredentials: true
+      });
+      
+      if (response.data.employee) {
+        const emp = response.data.employee;
+        setEmployeeId(emp.id);
+        setEmployeeName(emp.name);
+        setOfficeStartTime(emp.officeStartTime);
+        setOfficeEndTime(emp.officeEndTime);
+        setFlexibleStart(emp.flexibleStart);
+      }
+    } catch (error) {
+      // Not logged in, redirect to login
+      router.push('/login');
     }
   };
 
@@ -105,14 +121,6 @@ export default function AttendancePage() {
     }
   };
 
-  const handleEmployeeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value;
-    const selected = employees.find(emp => emp.id === selectedId);
-    if (selected) {
-      setEmployeeId(selected.id);
-      setEmployeeName(selected.name);
-    }
-  };
 
   const handleAction = async (action: 'checkin' | 'breakin' | 'breakout' | 'checkout') => {
     if (!employeeId || !employeeName) {
@@ -172,7 +180,24 @@ export default function AttendancePage() {
         <div className="sync-indicator">🔄 Syncing...</div>
       )}
 
-      <h1>📋 Attendance System</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 style={{ margin: 0 }}>📋 Attendance System</h1>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '8px 16px',
+            background: '#f0f0f0',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#666'
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
       {message && (
         <div className={`alert alert-${message.type === 'error' ? 'danger' : 'success'}`}>
@@ -183,15 +208,7 @@ export default function AttendancePage() {
       <div className="info-section">
         <div className="info-row">
           <span className="info-label">Employee:</span>
-          <select 
-            value={employeeId} 
-            onChange={handleEmployeeChange}
-            disabled={loading}
-          >
-            {employees.map(emp => (
-              <option key={emp.id} value={emp.id}>{emp.name}</option>
-            ))}
-          </select>
+          <span className="info-value" style={{ fontWeight: '600', fontSize: '16px' }}>{employeeName}</span>
         </div>
         
         <div className="info-row">

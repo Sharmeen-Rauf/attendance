@@ -36,6 +36,20 @@ export default function Home() {
             📱 Employee Attendance
           </Link>
           <Link 
+            href="/login"
+            style={{
+              padding: '15px 30px',
+              background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '10px',
+              fontWeight: '600',
+              fontSize: '16px'
+            }}
+          >
+            🔐 Employee Login
+          </Link>
+          <Link 
             href="/admin"
             style={{
               padding: '15px 30px',
@@ -48,6 +62,20 @@ export default function Home() {
             }}
           >
             👨‍💼 Admin Dashboard
+          </Link>
+          <Link 
+            href="/notifications"
+            style={{
+              padding: '15px 30px',
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '10px',
+              fontWeight: '600',
+              fontSize: '16px'
+            }}
+          >
+            📢 Live Notifications
           </Link>
         </div>
       </div>
