@@ -25,11 +25,12 @@ yarn-error.log*
 # Local env files
 .env*.local
 .env
+.env.local
 
 # Vercel
 .vercel
 
-# Python
+# Python (legacy backend - can be removed if not using)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -40,7 +41,7 @@ venv/
 ENV/
 .venv
 
-# Django
+# Django (legacy backend - can be removed if not using)
 *.log
 local_settings.py
 db.sqlite3
@@ -53,4 +54,3 @@ db.sqlite3-journal
 .idea/
 *.swp
 *.swo
-

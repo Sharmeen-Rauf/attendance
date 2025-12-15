@@ -2,6 +2,8 @@
 
 Complete attendance management system with offline support, mobile-friendly interface, and admin dashboard.
 
+**🚀 Ready to deploy on Vercel in minutes!**
+
 ## Features
 
 ✅ **Mobile-Friendly Attendance Page**
@@ -27,62 +29,59 @@ Complete attendance management system with offline support, mobile-friendly inte
 ## Tech Stack
 
 - **Frontend**: Next.js 14 (PWA)
-- **Backend**: Django + DRF
-- **Database**: MongoDB
-- **Excel Export**: openpyxl
+- **Backend**: Next.js API Routes (Serverless)
+- **Database**: MongoDB Atlas
+- **Excel Export**: xlsx
+- **Deployment**: Vercel (One-click deploy)
 
-## Setup Instructions
+## Quick Start (Local Development)
 
-### Frontend (Next.js)
-
+1. **Install Dependencies:**
 ```bash
 npm install
+```
+
+2. **Set Up MongoDB:**
+   - Create free account at https://mongodb.com/cloud/atlas
+   - Create a cluster and get connection string
+
+3. **Configure Environment:**
+   - Create `.env.local` file:
+   ```
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
+   ```
+
+4. **Run Development Server:**
+```bash
 npm run dev
 ```
 
-### Backend (Django)
+5. **Seed Sample Employees:**
+   - Visit: http://localhost:3000/api/employees/seed
+   - Or use: `curl -X POST http://localhost:3000/api/employees/seed`
 
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python manage.py runserver
-```
+6. **Access App:**
+   - Employee Page: http://localhost:3000/attendance
+   - Admin Dashboard: http://localhost:3000/admin
 
-## Configuration
+## 🚀 Deploy to Vercel (5 Minutes)
 
-1. **Frontend**: Create `.env.local` file:
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-```
+**See [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md) for complete deployment guide!**
 
-2. **Backend**: Configure MongoDB in `backend/attendance_system/settings.py`:
-   - Default: MongoDB on localhost:27017
-   - For MongoDB Atlas: Update `DATABASES` setting with connection string
+Quick steps:
+1. Push code to GitHub
+2. Import to Vercel
+3. Add `MONGODB_URI` environment variable
+4. Deploy! 🎉
 
-3. **Create Sample Employees**:
-```bash
-cd backend
-python manage.py create_sample_employees
-```
-
-4. **Create Admin User** (optional):
-```bash
-cd backend
-python manage.py createsuperuser
-```
-
-## Usage
-
-1. **Employee**: Visit `/attendance` and click action buttons
-2. **Admin**: Visit `/admin` for dashboard and reports
+Your app will be live at: `https://your-app.vercel.app`
 
 ## API Endpoints
 
 - `GET /api/time` - Get server time
-- `POST /api/attendance` - Submit attendance
+- `POST /api/attendance/submit` - Submit attendance
 - `GET /api/attendance` - Get attendance records
 - `GET /api/attendance/export` - Export Excel
 - `GET /api/employees` - Get employee list
+- `POST /api/employees/seed` - Create sample employees
 

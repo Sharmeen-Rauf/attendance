@@ -31,7 +31,7 @@ export default function AdminDashboard() {
 
   const loadEmployees = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/employees`);
+      const response = await fetch('/api/employees');
       const data = await response.json();
       setEmployees(data);
     } catch (error) {
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
       if (filterStatus) params.append('status', filterStatus);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/attendance?${params}`
+        `/api/attendance?${params}`
       );
       const data = await response.json();
       setRecords(data);
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
       if (filterStatus) params.append('status', filterStatus);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/attendance/export?${params}`,
+        `/api/attendance/export?${params}`,
         { method: 'GET' }
       );
       

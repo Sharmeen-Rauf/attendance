@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { saveToOfflineStorage, getPendingAttendances, markAsSynced, removeSyncedItems } from './offlineStorage';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -18,7 +18,7 @@ export const isOnline = (): boolean => {
 // Get server time
 export const getServerTime = async (): Promise<string> => {
   try {
-    const response = await api.get('/time');
+    const response = await api.get('/api/time');
     return response.data.serverTime;
   } catch (error) {
     // Fallback to client time if server unavailable
@@ -54,7 +54,7 @@ export const submitAttendance = async (
   }
 
   try {
-    const response = await api.post('/attendance/submit', payload);
+    const response = await api.post('/api/attendance/submit', payload);
     return response.data;
   } catch (error: any) {
     // If request fails, save to offline storage
@@ -89,7 +89,7 @@ export const syncPendingAttendances = async (): Promise<number> => {
         timestamp: item.serverTime || item.timestamp,
       };
       
-      await api.post('/attendance/submit', payload);
+      await api.post('/api/attendance/submit', payload);
       markAsSynced(item.id);
       syncedCount++;
     } catch (error) {
@@ -104,7 +104,7 @@ export const syncPendingAttendances = async (): Promise<number> => {
 // Get employee list
 export const getEmployees = async (): Promise<any[]> => {
   try {
-    const response = await api.get('/employees');
+      const response = await api.get('/api/employees');
     return response.data;
   } catch (error) {
     console.error('Error fetching employees:', error);
@@ -115,7 +115,7 @@ export const getEmployees = async (): Promise<any[]> => {
 // Get today's attendance status
 export const getTodayStatus = async (employeeId: string): Promise<any> => {
   try {
-    const response = await api.get(`/attendance/today/${employeeId}`);
+    const response = await api.get(`/api/attendance/today/${employeeId}`);
     return response.data;
   } catch (error) {
     return null;
