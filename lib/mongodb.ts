@@ -4,6 +4,8 @@ const uri: string = process.env.MONGODB_URI || '';
 
 if (!uri) {
   console.warn('MONGODB_URI not set. Please add it to .env.local or Vercel environment variables.');
+} else {
+  console.log('✅ MongoDB connection configured');
 }
 const options = {};
 
