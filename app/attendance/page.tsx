@@ -224,24 +224,28 @@ export default function AttendancePage() {
         <div className="offline-indicator">📴 Offline Mode</div>
       )}
       {(() => {
-        const pending = getPendingAttendances().filter(item => !item.synced);
-        if (pending.length > 0) {
-          return (
-            <div 
-              className="sync-indicator" 
-              onClick={async () => {
-                const count = await syncPendingAttendances();
-                if (count > 0) {
-                  setMessage({ type: 'success', text: `${count} record(s) synced!` });
-                  setTimeout(() => setMessage(null), 3000);
-                  await loadTodayStatus();
-                }
-              }} 
-              style={{ cursor: 'pointer' }}
-            >
-              🔄 {pending.length} pending - Click to sync
-            </div>
-          );
+        try {
+          const pending = getPendingAttendances().filter(item => !item.synced);
+          if (pending.length > 0) {
+            return (
+              <div 
+                className="sync-indicator" 
+                onClick={async () => {
+                  const count = await syncPendingAttendances();
+                  if (count > 0) {
+                    setMessage({ type: 'success', text: `${count} record(s) synced!` });
+                    setTimeout(() => setMessage(null), 3000);
+                    await loadTodayStatus();
+                  }
+                }} 
+                style={{ cursor: 'pointer' }}
+              >
+                🔄 {pending.length} pending - Click to sync
+              </div>
+            );
+          }
+        } catch (error) {
+          console.error('Error rendering sync indicator:', error);
         }
         return null;
       })()}
