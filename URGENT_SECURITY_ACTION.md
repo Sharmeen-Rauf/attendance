@@ -22,7 +22,7 @@ All files now use placeholder examples instead of real credentials.
 1. Go to https://cloud.mongodb.com
 2. Log in to MongoDB Atlas
 3. Go to **Database Access** (left sidebar)
-4. Find user: `Backend_Project_Database`
+4. Find the database user that was exposed (check your MongoDB Atlas dashboard)
 5. Click the **Edit** button (pencil icon)
 6. Click **Edit Password**
 7. Generate a **new secure password**
@@ -34,8 +34,12 @@ All files now use placeholder examples instead of real credentials.
 1. Open `.env.local` file
 2. Update `MONGODB_URI` with new password:
    ```
-   MONGODB_URI=mongodb+srv://Backend_Project_Database:NEW_PASSWORD@cluster0.wqsxt7b.mongodb.net/?appName=Cluster0
+   MONGODB_URI=mongodb+srv://username:NEW_PASSWORD@cluster.mongodb.net/?retryWrites=true&w=majority
    ```
+   **Replace:**
+   - `username` with your MongoDB username
+   - `NEW_PASSWORD` with your new password
+   - `cluster.mongodb.net` with your actual cluster hostname
 
 ### Step 3: Update Vercel (if deployed)
 

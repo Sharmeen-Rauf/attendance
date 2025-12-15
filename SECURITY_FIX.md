@@ -21,7 +21,7 @@ GitHub detected exposed MongoDB credentials in your repository. This is a **crit
 
 1. **Change MongoDB Database User Password:**
    - Go to MongoDB Atlas → Database Access
-   - Find user: `Backend_Project_Database`
+   - Find the database user that was exposed
    - Click "Edit" → Change password
    - Generate a new secure password
    - Save the new password securely
