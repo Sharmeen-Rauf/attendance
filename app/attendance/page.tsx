@@ -171,6 +171,24 @@ export default function AttendancePage() {
     return <span className="status-badge status-on-time">✓ Checked In</span>;
   };
 
+  const getEmployeeTiming = () => {
+    if (!employeeId) return null;
+    
+    if (flexibleStart) {
+      return `Flexible (Complete 8 hours)`;
+    }
+    return `${officeStartTime} - ${officeEndTime}`;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      router.push('/login');
+    } catch (error) {
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="container">
       {!online && (
