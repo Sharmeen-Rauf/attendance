@@ -1,0 +1,11 @@
+{
+  "name": "Attendance System",
+  "short_name": "Attendance",
+  "description": "HR Attendance Management System",
+  "start_url": "/attendance",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "icons": []
+}
+
