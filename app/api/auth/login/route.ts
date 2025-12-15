@@ -34,19 +34,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if employee exists, if not create it
-    let employee = await db.collection('employees').findOne({
+    let employee: any = await db.collection('employees').findOne({
       id: employeeId
     });
 
     if (!employee) {
       // Auto-create employee from config
-      employee = {
+      const newEmployee = {
         id: employeeId,
         name: config.name,
         email: null,
         created_at: new Date()
       };
-      await db.collection('employees').insertOne(employee);
+      await db.collection('employees').insertOne(newEmployee);
+      employee = await db.collection('employees').findOne({
+        id: employeeId
+      });
     }
 
     // Create session token
