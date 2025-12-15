@@ -19,11 +19,28 @@ export async function POST() {
       { id: 'RAB001', name: 'Rabia', email: 'rabia@company.com' },
     ];
 
-    const result = await db.collection('employees').insertMany(employees);
+    let insertedCount = 0;
+    let skippedCount = 0;
+
+    for (const emp of employees) {
+      const existing = await db.collection('employees').findOne({ id: emp.id });
+      if (!existing) {
+        await db.collection('employees').insertOne({
+          ...emp,
+          created_at: new Date()
+        });
+        insertedCount++;
+      } else {
+        skippedCount++;
+      }
+    }
 
     return NextResponse.json({
-      message: 'Sample employees created successfully',
-      count: result.insertedCount
+      message: insertedCount > 0 
+        ? `${insertedCount} employee(s) created successfully${skippedCount > 0 ? `, ${skippedCount} already exist` : ''}`
+        : `All employees already exist (${skippedCount} employees)`,
+      inserted: insertedCount,
+      skipped: skippedCount
     });
   } catch (error: any) {
     if (error.code === 11000) {

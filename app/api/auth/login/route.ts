@@ -24,25 +24,29 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase();
     
-    // Verify employee exists
-    const employee = await db.collection('employees').findOne({
-      id: employeeId
-    });
-
-    if (!employee) {
+    // Get employee config first
+    const config = getEmployeeConfig(employeeId);
+    if (!config) {
       return NextResponse.json(
-        { error: 'Employee not found' },
+        { error: 'Employee configuration not found. Please contact administrator.' },
         { status: 404 }
       );
     }
 
-    // Get employee config
-    const config = getEmployeeConfig(employeeId);
-    if (!config) {
-      return NextResponse.json(
-        { error: 'Employee configuration not found' },
-        { status: 404 }
-      );
+    // Check if employee exists, if not create it
+    let employee = await db.collection('employees').findOne({
+      id: employeeId
+    });
+
+    if (!employee) {
+      // Auto-create employee from config
+      employee = {
+        id: employeeId,
+        name: config.name,
+        email: null,
+        created_at: new Date()
+      };
+      await db.collection('employees').insertOne(employee);
     }
 
     // Create session token

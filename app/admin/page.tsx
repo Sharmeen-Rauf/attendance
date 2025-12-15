@@ -23,6 +23,10 @@ export default function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [newEmployee, setNewEmployee] = useState({ id: '', name: '', email: '' });
+  const [addEmployeeLoading, setAddEmployeeLoading] = useState(false);
+  const [addEmployeeMessage, setAddEmployeeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     loadEmployees();
@@ -36,6 +40,67 @@ export default function AdminDashboard() {
       setEmployees(data);
     } catch (error) {
       console.error('Error loading employees:', error);
+    }
+  };
+
+  const handleAddEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddEmployeeLoading(true);
+    setAddEmployeeMessage(null);
+
+    try {
+      const response = await fetch('/api/employees/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: newEmployee.id.trim().toUpperCase(),
+          name: newEmployee.name.trim(),
+          email: newEmployee.email.trim() || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAddEmployeeMessage({ type: 'success', text: 'Employee added successfully!' });
+        setNewEmployee({ id: '', name: '', email: '' });
+        setShowAddEmployee(false);
+        await loadEmployees();
+        setTimeout(() => setAddEmployeeMessage(null), 3000);
+      } else {
+        setAddEmployeeMessage({ type: 'error', text: data.error || 'Failed to add employee' });
+      }
+    } catch (error) {
+      setAddEmployeeMessage({ type: 'error', text: 'Failed to add employee. Please try again.' });
+    } finally {
+      setAddEmployeeLoading(false);
+    }
+  };
+
+  const handleSeedEmployees = async () => {
+    setAddEmployeeLoading(true);
+    setAddEmployeeMessage(null);
+
+    try {
+      const response = await fetch('/api/employees/seed', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAddEmployeeMessage({ type: 'success', text: data.message || 'Employees seeded successfully!' });
+        await loadEmployees();
+        setTimeout(() => setAddEmployeeMessage(null), 3000);
+      } else {
+        setAddEmployeeMessage({ type: 'error', text: data.error || 'Failed to seed employees' });
+      }
+    } catch (error) {
+      setAddEmployeeMessage({ type: 'error', text: 'Failed to seed employees. Please try again.' });
+    } finally {
+      setAddEmployeeLoading(false);
     }
   };
 
@@ -120,7 +185,139 @@ export default function AdminDashboard() {
         padding: '30px',
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
       }}>
-        <h1 style={{ marginBottom: '30px', color: '#333' }}>👨‍💼 Admin Dashboard</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <h1 style={{ margin: 0, color: '#333' }}>👨‍💼 Admin Dashboard</h1>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setShowAddEmployee(!showAddEmployee)}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              {showAddEmployee ? '✖️ Cancel' : '➕ Add Employee'}
+            </button>
+            <button
+              onClick={handleSeedEmployees}
+              disabled={addEmployeeLoading}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: addEmployeeLoading ? 'not-allowed' : 'pointer',
+                opacity: addEmployeeLoading ? 0.6 : 1
+              }}
+            >
+              {addEmployeeLoading ? 'Loading...' : '🌱 Seed Default Employees'}
+            </button>
+          </div>
+        </div>
+
+        {addEmployeeMessage && (
+          <div style={{
+            padding: '12px',
+            background: addEmployeeMessage.type === 'error' ? '#fee' : '#efe',
+            color: addEmployeeMessage.type === 'error' ? '#c33' : '#3c3',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            fontSize: '14px'
+          }}>
+            {addEmployeeMessage.text}
+          </div>
+        )}
+
+        {showAddEmployee && (
+          <div style={{
+            background: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '10px',
+            marginBottom: '30px',
+            border: '2px solid #e0e0e0'
+          }}>
+            <h2 style={{ marginBottom: '15px', color: '#333' }}>➕ Add New Employee</h2>
+            <form onSubmit={handleAddEmployee}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '15px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Employee ID *</label>
+                  <input
+                    type="text"
+                    value={newEmployee.id}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, id: e.target.value.toUpperCase() })}
+                    placeholder="e.g., EMP001"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Employee Name *</label>
+                  <input
+                    type="text"
+                    value={newEmployee.name}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+                    placeholder="e.g., John Doe"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Email (Optional)</label>
+                  <input
+                    type="email"
+                    value={newEmployee.email}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+                    placeholder="e.g., john@company.com"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={addEmployeeLoading}
+                style={{
+                  padding: '10px 30px',
+                  background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: addEmployeeLoading ? 'not-allowed' : 'pointer',
+                  opacity: addEmployeeLoading ? 0.6 : 1
+                }}
+              >
+                {addEmployeeLoading ? 'Adding...' : '➕ Add Employee'}
+              </button>
+            </form>
+          </div>
+        )}
 
         <div style={{
           display: 'grid',
