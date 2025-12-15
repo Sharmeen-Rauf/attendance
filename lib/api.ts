@@ -83,6 +83,7 @@ export const syncPendingAttendances = async (): Promise<number> => {
   }
 
   let syncedCount = 0;
+  const failedIds: string[] = [];
   const errors: string[] = [];
 
   for (const item of pending) {
@@ -101,12 +102,25 @@ export const syncPendingAttendances = async (): Promise<number> => {
         markAsSynced(item.id);
         syncedCount++;
       } else {
+        failedIds.push(item.id);
         errors.push(`Failed to sync ${item.action} for ${item.employeeName}`);
       }
     } catch (error: any) {
       console.error('Error syncing attendance:', error);
+      failedIds.push(item.id);
+      
+      // Don't mark as failed if it's a validation error (like "already checked in")
+      // These are permanent failures and should be removed
+      const status = error.response?.status;
       const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
-      errors.push(`Failed to sync ${item.action} for ${item.employeeName}: ${errorMsg}`);
+      
+      if (status === 400 && (errorMsg.includes('already') || errorMsg.includes('Please'))) {
+        // Validation error - mark as synced (permanently failed, no point retrying)
+        markAsSynced(item.id);
+        syncedCount++; // Count as "processed"
+      } else {
+        errors.push(`Failed to sync ${item.action} for ${item.employeeName}: ${errorMsg}`);
+      }
     }
   }
 

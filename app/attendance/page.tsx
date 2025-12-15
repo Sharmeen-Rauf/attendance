@@ -19,6 +19,8 @@ export default function AttendancePage() {
   const [todayStatus, setTodayStatus] = useState<any>(null);
   const [checkInTime, setCheckInTime] = useState<string | null>(null);
   const [breakInTime, setBreakInTime] = useState<string | null>(null);
+  const [breakOutTime, setBreakOutTime] = useState<string | null>(null);
+  const [checkOutTime, setCheckOutTime] = useState<string | null>(null);
   const [canBreakOut, setCanBreakOut] = useState(false);
   const [canCheckOut, setCanCheckOut] = useState(false);
   const [officeStartTime, setOfficeStartTime] = useState('09:00');
@@ -113,19 +115,35 @@ export default function AttendancePage() {
 
   const loadTodayStatus = async () => {
     if (!employeeId) return;
-    const status = await getTodayStatus(employeeId);
-    setTodayStatus(status);
-    
-    if (status) {
-      setCheckInTime(status.checkInTime || null);
-      setBreakInTime(status.breakInTime || null);
-      setCanBreakOut(status.breakInTime && !status.breakOutTime);
-      setCanCheckOut(status.checkInTime && !status.checkOutTime && (!status.breakInTime || status.breakOutTime));
-    } else {
-      setCheckInTime(null);
-      setBreakInTime(null);
-      setCanBreakOut(false);
-      setCanCheckOut(false);
+    try {
+      const status = await getTodayStatus(employeeId);
+      setTodayStatus(status);
+      
+      if (status) {
+        setCheckInTime(status.checkInTime || null);
+        setBreakInTime(status.breakInTime || null);
+        setBreakOutTime(status.breakOutTime || null);
+        setCheckOutTime(status.checkOutTime || null);
+        
+        // Break-Out is enabled when: break started but not ended
+        setCanBreakOut(!!status.breakInTime && !status.breakOutTime);
+        
+        // Check-Out is enabled when: checked in AND not checked out AND (no break OR break completed)
+        setCanCheckOut(
+          !!status.checkInTime && 
+          !status.checkOutTime && 
+          (!status.breakInTime || !!status.breakOutTime)
+        );
+      } else {
+        setCheckInTime(null);
+        setBreakInTime(null);
+        setBreakOutTime(null);
+        setCheckOutTime(null);
+        setCanBreakOut(false);
+        setCanCheckOut(false);
+      }
+    } catch (error) {
+      console.error('Error loading today status:', error);
     }
   };
 
@@ -158,9 +176,7 @@ export default function AttendancePage() {
       if (isOnline()) {
         setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
         // Reload status after successful submission
-        setTimeout(async () => {
-          await loadTodayStatus();
-        }, 500);
+        await loadTodayStatus();
       } else {
         const pending = getPendingAttendances();
         setMessage({ 
@@ -231,14 +247,30 @@ export default function AttendancePage() {
               <div 
                 className="sync-indicator" 
                 onClick={async () => {
-                  const count = await syncPendingAttendances();
-                  if (count > 0) {
-                    setMessage({ type: 'success', text: `${count} record(s) synced!` });
-                    setTimeout(() => setMessage(null), 3000);
+                  if (loading) return;
+                  setLoading(true);
+                  try {
+                    const count = await syncPendingAttendances();
+                    if (count > 0) {
+                      setMessage({ type: 'success', text: `${count} record(s) synced!` });
+                      setTimeout(() => setMessage(null), 3000);
+                    } else {
+                      const stillPending = getPendingAttendances().filter(item => !item.synced);
+                      if (stillPending.length > 0) {
+                        setMessage({ type: 'error', text: `Failed to sync ${stillPending.length} record(s). Check console for details.` });
+                        setTimeout(() => setMessage(null), 5000);
+                      }
+                    }
                     await loadTodayStatus();
+                  } catch (error: any) {
+                    console.error('Sync error:', error);
+                    setMessage({ type: 'error', text: `Sync failed: ${error.message || 'Unknown error'}` });
+                    setTimeout(() => setMessage(null), 5000);
+                  } finally {
+                    setLoading(false);
                   }
                 }} 
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}
               >
                 🔄 {pending.length} pending - Click to sync
               </div>
@@ -318,6 +350,13 @@ export default function AttendancePage() {
             <span className="info-value">{format(new Date(breakInTime), 'HH:mm:ss')}</span>
           </div>
         )}
+
+        {breakOutTime && (
+          <div className="info-row">
+            <span className="info-label">Break-Out:</span>
+            <span className="info-value">{format(new Date(breakOutTime), 'HH:mm:ss')}</span>
+          </div>
+        )}
       </div>
 
       <div className="button-group">
@@ -332,7 +371,7 @@ export default function AttendancePage() {
         <button
           className="action-btn btn-breakin"
           onClick={() => handleAction('breakin')}
-          disabled={loading || !checkInTime || !!breakInTime || !!canBreakOut}
+          disabled={loading || !checkInTime || !!breakInTime || !!checkOutTime}
         >
           🟡 Break-In
         </button>
@@ -340,7 +379,7 @@ export default function AttendancePage() {
         <button
           className="action-btn btn-breakout"
           onClick={() => handleAction('breakout')}
-          disabled={loading || !canBreakOut}
+          disabled={loading || !breakInTime || !!breakOutTime}
         >
           🟠 Break-Out
         </button>
