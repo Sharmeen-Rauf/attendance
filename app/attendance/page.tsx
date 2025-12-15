@@ -173,9 +173,29 @@ export default function AttendancePage() {
     try {
       const result = await submitAttendance(employeeId, employeeName, action);
       
+      // Update state immediately for better UX
+      const now = new Date().toISOString();
+      if (action === 'checkin') {
+        setCheckInTime(now);
+        setCanBreakOut(false);
+        setCanCheckOut(false);
+      } else if (action === 'breakin') {
+        setBreakInTime(now);
+        setCanBreakOut(true);
+        setCanCheckOut(false);
+      } else if (action === 'breakout') {
+        setBreakOutTime(now);
+        setCanBreakOut(false);
+        setCanCheckOut(true);
+      } else if (action === 'checkout') {
+        setCheckOutTime(now);
+        setCanBreakOut(false);
+        setCanCheckOut(false);
+      }
+      
       if (isOnline()) {
         setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
-        // Reload status after successful submission
+        // Reload status after successful submission to get server data
         await loadTodayStatus();
       } else {
         const pending = getPendingAttendances();
@@ -189,6 +209,20 @@ export default function AttendancePage() {
     } catch (error: any) {
       console.error('Attendance submission error:', error);
       if (error.message === 'OFFLINE') {
+        // Update state even when offline
+        const now = new Date().toISOString();
+        if (action === 'checkin') {
+          setCheckInTime(now);
+        } else if (action === 'breakin') {
+          setBreakInTime(now);
+          setCanBreakOut(true);
+        } else if (action === 'breakout') {
+          setBreakOutTime(now);
+          setCanBreakOut(false);
+        } else if (action === 'checkout') {
+          setCheckOutTime(now);
+        }
+        
         const pending = getPendingAttendances();
         setMessage({ 
           type: 'success', 

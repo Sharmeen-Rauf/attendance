@@ -1,13 +1,21 @@
 import axios from 'axios';
 import { saveToOfflineStorage, getPendingAttendances, markAsSynced, removeSyncedItems } from './offlineStorage';
 
+// Use relative path for Vercel deployment (works for both dev and production)
+// Only use absolute URL if explicitly set in environment (for external API)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
+// Ensure we never use localhost in production
+const baseURL = typeof window !== 'undefined' && window.location.hostname === 'localhost' && API_URL.startsWith('http')
+  ? API_URL
+  : API_URL.startsWith('http') ? API_URL : '/api';
+
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for session cookies
 });
 
 // Check if online

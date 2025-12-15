@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
-  },
+  // Remove hardcoded localhost - use relative paths for Vercel deployment
+  // For local dev, you can set NEXT_PUBLIC_API_URL in .env.local if needed
 };
 
 module.exports = nextConfig;
