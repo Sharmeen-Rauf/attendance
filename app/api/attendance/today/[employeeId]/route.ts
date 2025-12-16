@@ -16,7 +16,9 @@ export async function GET(
 
     const { employeeId } = params;
     const db = await getDatabase();
-    const today = new Date().toISOString().split('T')[0];
+    // Get today's date in UTC to match database storage
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
 
     const record = await db.collection('attendance_records').findOne({
       employee_id: employeeId,

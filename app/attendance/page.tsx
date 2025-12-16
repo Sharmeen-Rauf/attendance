@@ -70,13 +70,21 @@ export default function AttendancePage() {
         console.error('Initial sync error:', error);
       });
     }
+    
+    // Also refresh status periodically to catch any updates
+    const statusInterval = setInterval(() => {
+      if (employeeId) {
+        loadTodayStatus();
+      }
+    }, 30000); // Refresh every 30 seconds
 
     return () => {
       clearInterval(timeInterval);
+      clearInterval(statusInterval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [employeeId]);
 
   useEffect(() => {
     if (employeeId) {
@@ -120,6 +128,7 @@ export default function AttendancePage() {
       setTodayStatus(status);
       
       if (status) {
+        // Update check-in status - only set if we have actual data
         setCheckInTime(status.checkInTime || null);
         setBreakInTime(status.breakInTime || null);
         setBreakOutTime(status.breakOutTime || null);
@@ -135,6 +144,7 @@ export default function AttendancePage() {
           (!status.breakInTime || !!status.breakOutTime)
         );
       } else {
+        // No status found - reset everything
         setCheckInTime(null);
         setBreakInTime(null);
         setBreakOutTime(null);
@@ -144,6 +154,7 @@ export default function AttendancePage() {
       }
     } catch (error) {
       console.error('Error loading today status:', error);
+      // On error, don't clear state - might be temporary network issue
     }
   };
 
@@ -196,7 +207,10 @@ export default function AttendancePage() {
       if (isOnline()) {
         setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
         // Reload status after successful submission to get server data
-        await loadTodayStatus();
+        // Add small delay to ensure database is updated
+        setTimeout(async () => {
+          await loadTodayStatus();
+        }, 1500);
       } else {
         const pending = getPendingAttendances();
         setMessage({ 
@@ -318,21 +332,46 @@ export default function AttendancePage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ margin: 0 }}>📋 Attendance System</h1>
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: '8px 16px',
-            background: '#f0f0f0',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#666'
-          }}
-        >
-          Logout
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={async () => {
+              setLoading(true);
+              await loadTodayStatus();
+              setLoading(false);
+              setMessage({ type: 'success', text: 'Status refreshed!' });
+              setTimeout(() => setMessage(null), 2000);
+            }}
+            disabled={loading}
+            style={{
+              padding: '8px 16px',
+              background: '#007bff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: loading ? 'wait' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'white',
+              opacity: loading ? 0.6 : 1
+            }}
+          >
+            🔄 Refresh
+          </button>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '8px 16px',
+              background: '#f0f0f0',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#666'
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {message && (

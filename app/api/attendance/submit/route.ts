@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase();
     const timestampDate = new Date(timestamp);
+    // Use UTC date to ensure consistency
     const today = timestampDate.toISOString().split('T')[0];
 
     // Get or create today's attendance record
