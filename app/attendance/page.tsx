@@ -174,7 +174,11 @@ export default function AttendancePage() {
 
   const handleAction = async (action: 'checkin' | 'breakin' | 'breakout' | 'checkout') => {
     if (!employeeId || !employeeName) {
-      setMessage({ type: 'error', text: 'Please select an employee' });
+      // Don't show error if still loading auth
+      if (!loading) {
+        setMessage({ type: 'error', text: 'Please wait, loading employee information...' });
+        setTimeout(() => setMessage(null), 2000);
+      }
       return;
     }
 
@@ -208,9 +212,10 @@ export default function AttendancePage() {
         setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
         // Reload status after successful submission to get server data
         // Add small delay to ensure database is updated
+        // Reload status smoothly after submission
         setTimeout(async () => {
           await loadTodayStatus();
-        }, 1500);
+        }, 800);
       } else {
         const pending = getPendingAttendances();
         setMessage({ 
@@ -332,46 +337,21 @@ export default function AttendancePage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ margin: 0 }}>📋 Attendance System</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={async () => {
-              setLoading(true);
-              await loadTodayStatus();
-              setLoading(false);
-              setMessage({ type: 'success', text: 'Status refreshed!' });
-              setTimeout(() => setMessage(null), 2000);
-            }}
-            disabled={loading}
-            style={{
-              padding: '8px 16px',
-              background: '#007bff',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: loading ? 'wait' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: 'white',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            🔄 Refresh
-          </button>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: '8px 16px',
-              background: '#f0f0f0',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: '#666'
-            }}
-          >
-            Logout
-          </button>
-        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '8px 16px',
+            background: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#fff'
+          }}
+        >
+          Logout
+        </button>
       </div>
 
       {message && (
@@ -438,7 +418,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('checkin')}
           disabled={loading || !!checkInTime}
         >
-          🟢 Check-In
+          ✓ Check-In
         </button>
 
         <button
@@ -446,7 +426,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('breakin')}
           disabled={loading || !checkInTime || !!breakInTime || !!checkOutTime}
         >
-          🟡 Break-In
+          ⊞ Break-In
         </button>
 
         <button
@@ -454,7 +434,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('breakout')}
           disabled={loading || !breakInTime || !!breakOutTime}
         >
-          🟠 Break-Out
+          ⊟ Break-Out
         </button>
 
         <button
@@ -462,7 +442,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('checkout')}
           disabled={loading || !canCheckOut}
         >
-          🔵 Check-Out
+          ✗ Check-Out
         </button>
       </div>
     </div>
