@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetch('/api/employees');
       const data = await response.json();
-      setEmployees(data);
+      setEmployees(data.employees || data || []);
     } catch (error) {
       console.error('Error loading employees:', error);
     }

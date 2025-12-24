@@ -76,10 +76,20 @@ export async function POST(request: NextRequest) {
     // Update record based on action
     if (action === 'checkin') {
       if (record.check_in_time) {
-        return NextResponse.json(
-          { error: 'Already checked in today' },
-          { status: 400 }
-        );
+        // Instead of error, return current status - user might be refreshing
+        return NextResponse.json({
+          id: record.id,
+          employeeId: record.employee_id,
+          employeeName: record.employee_name,
+          date: record.date,
+          checkInTime: record.check_in_time ? new Date(record.check_in_time).toISOString() : null,
+          checkOutTime: record.check_out_time ? new Date(record.check_out_time).toISOString() : null,
+          breakInTime: record.break_in_time ? new Date(record.break_in_time).toISOString() : null,
+          breakOutTime: record.break_out_time ? new Date(record.break_out_time).toISOString() : null,
+          status: record.status,
+          breakDuration: record.break_duration,
+          message: 'Already checked in today',
+        }, { status: 200 });
       }
       record.check_in_time = timestampDate;
       record.status = calculateStatus(timestampDate, employeeConfig);

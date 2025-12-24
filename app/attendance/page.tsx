@@ -209,13 +209,17 @@ export default function AttendancePage() {
       }
       
       if (isOnline()) {
-        setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
-        // Reload status after successful submission to get server data
-        // Add small delay to ensure database is updated
-        // Reload status smoothly after submission
-        setTimeout(async () => {
+        // Check if result has a message (e.g., "already checked in")
+        if (result?.message) {
+          // Silently update status instead of showing error
           await loadTodayStatus();
-        }, 800);
+        } else {
+          setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
+          // Reload status after successful submission to get server data
+          setTimeout(async () => {
+            await loadTodayStatus();
+          }, 800);
+        }
       } else {
         const pending = getPendingAttendances();
         setMessage({ 
@@ -418,7 +422,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('checkin')}
           disabled={loading || !!checkInTime}
         >
-          ✓ Check-In
+          Check-In
         </button>
 
         <button
@@ -426,7 +430,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('breakin')}
           disabled={loading || !checkInTime || !!breakInTime || !!checkOutTime}
         >
-          ⊞ Break-In
+          Break-In
         </button>
 
         <button
@@ -434,7 +438,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('breakout')}
           disabled={loading || !breakInTime || !!breakOutTime}
         >
-          ⊟ Break-Out
+          Break-Out
         </button>
 
         <button
@@ -442,7 +446,7 @@ export default function AttendancePage() {
           onClick={() => handleAction('checkout')}
           disabled={loading || !canCheckOut}
         >
-          ✗ Check-Out
+          Check-Out
         </button>
       </div>
     </div>

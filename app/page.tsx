@@ -4,82 +4,47 @@ export default function Home() {
   return (
     <div style={{
       minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px'
+      background: 'var(--bg-secondary)',
+      padding: '40px 20px'
     }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '20px',
-        padding: '40px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-        textAlign: 'center',
-        maxWidth: '500px'
-      }}>
-        <h1 style={{ marginBottom: '30px', color: '#333' }}>🏢 Attendance System</h1>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <Link 
-            href="/attendance"
-            style={{
-              padding: '15px 30px',
-              background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '16px'
-            }}
-          >
-            📱 Employee Attendance
-          </Link>
-          <Link 
-            href="/login"
-            style={{
-              padding: '15px 30px',
-              background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '16px'
-            }}
-          >
-            🔐 Employee Login
-          </Link>
-          <Link 
-            href="/admin"
-            style={{
-              padding: '15px 30px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '16px'
-            }}
-          >
-            👨‍💼 Admin Dashboard
-          </Link>
-          <Link 
-            href="/notifications"
-            style={{
-              padding: '15px 30px',
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '16px'
-            }}
-          >
-            📢 Live Notifications
-          </Link>
+      <div className="container">
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <h1 style={{ marginBottom: '12px', color: 'var(--text-primary)' }}>HR Management System</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '18px' }}>Complete Human Resources Management Platform</p>
+        </div>
+
+        <div className="grid grid-cols-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div className="card">
+            <h2 style={{ marginBottom: '8px' }}>Employee Portal</h2>
+            <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
+              Access your attendance dashboard and manage your work records
+            </p>
+            <Link href="/login" className="btn btn-primary" style={{ display: 'inline-block' }}>
+              Employee Login
+            </Link>
+          </div>
+
+          <div className="card">
+            <h2 style={{ marginBottom: '8px' }}>HR Management</h2>
+            <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
+              Complete HR system with attendance, payroll, leave management, and employee administration
+            </p>
+            <Link href="/admin/hr" className="btn btn-secondary" style={{ display: 'inline-block' }}>
+              HR Dashboard
+            </Link>
+          </div>
+
+          <div className="card">
+            <h2 style={{ marginBottom: '8px' }}>Live Status</h2>
+            <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
+              View real-time employee status and notifications
+            </p>
+            <Link href="/notifications" className="btn btn-outline" style={{ display: 'inline-block' }}>
+              View Live Status
+            </Link>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

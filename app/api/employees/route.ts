@@ -15,7 +15,7 @@ export async function GET() {
     const employees = await db.collection('employees').find({}).toArray();
     
     // Merge with config to include timing info
-    return NextResponse.json(employees.map(emp => {
+    const formattedEmployees = employees.map(emp => {
       const config = EMPLOYEE_CONFIGS[emp.id || emp._id];
       return {
         id: emp.id || emp._id,
@@ -26,7 +26,9 @@ export async function GET() {
         flexibleStart: config?.flexibleStart || false,
         requiredHours: config?.requiredHours || 8
       };
-    }));
+    });
+    
+    return NextResponse.json({ employees: formattedEmployees });
   } catch (error: any) {
     console.error('Error fetching employees:', error);
     return NextResponse.json(
