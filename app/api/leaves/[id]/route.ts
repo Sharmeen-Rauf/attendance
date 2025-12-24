@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export async function PATCH(
   request: NextRequest,
@@ -40,16 +41,38 @@ export async function PATCH(
       updateData.rejected_at = new Date();
     }
 
+    // Try to find by id field first, if not found try _id as ObjectId
+    let query: any = { id };
     const result = await db.collection('leave_records').updateOne(
-      { $or: [{ id }, { _id: id }] },
+      query,
       { $set: updateData }
     );
 
+    // If not found by id field, try ObjectId
     if (result.matchedCount === 0) {
-      return NextResponse.json(
-        { error: 'Leave record not found' },
-        { status: 404 }
-      );
+      try {
+        const objectId = new ObjectId(id);
+        const resultById = await db.collection('leave_records').updateOne(
+          { _id: objectId },
+          { $set: updateData }
+        );
+        if (resultById.matchedCount === 0) {
+          return NextResponse.json(
+            { error: 'Leave record not found' },
+            { status: 404 }
+          );
+        }
+        return NextResponse.json({ 
+          message: `Leave request ${status}`,
+          modified: resultById.modifiedCount > 0 
+        });
+      } catch (error) {
+        // Invalid ObjectId format
+        return NextResponse.json(
+          { error: 'Leave record not found' },
+          { status: 404 }
+        );
+      }
     }
 
     return NextResponse.json({ 
