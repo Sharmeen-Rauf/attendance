@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { submitAttendance, getServerTime, isOnline, syncPendingAttendances, getTodayStatus } from '@/lib/api';
 import { getPendingAttendances } from '@/lib/offlineStorage';
 import { format } from 'date-fns';
@@ -340,22 +341,27 @@ export default function AttendancePage() {
       })()}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0 }}>📋 Attendance System</h1>
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: '8px 16px',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#fff'
-          }}
-        >
-          Logout
-        </button>
+        <h1 style={{ margin: 0 }}>Attendance System</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link href="/aira" className="btn" style={{ background: 'var(--secondary-color)', color: 'white', textDecoration: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>
+            Aira Assistant
+          </Link>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '8px 16px',
+              background: 'var(--text-primary)',
+              border: '1px solid var(--border-dark)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#fff'
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {message && (

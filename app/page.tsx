@@ -35,6 +35,16 @@ export default function Home() {
           </div>
 
           <div className="card">
+            <h2 style={{ marginBottom: '8px' }}>Aira AI Assistant</h2>
+            <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
+              Get instant help with HR queries, attendance, leaves, and more using our AI assistant
+            </p>
+            <Link href="/aira" className="btn btn-secondary" style={{ display: 'inline-block' }}>
+              Chat with Aira
+            </Link>
+          </div>
+
+          <div className="card">
             <h2 style={{ marginBottom: '8px' }}>Live Status</h2>
             <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
               View real-time employee status and notifications

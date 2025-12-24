@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
 import { format } from 'date-fns';
+import AiraChat from '@/app/components/AiraChat';
 
 type TabType = 'attendance' | 'employees' | 'payroll' | 'leaves';
 
@@ -15,6 +16,7 @@ export default function HRAdminPage() {
   const [leaves, setLeaves] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterDate, setFilterDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [showAira, setShowAira] = useState(false);
 
   useEffect(() => {
     loadEmployees();
@@ -100,15 +102,40 @@ export default function HRAdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
+      {showAira && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '400px',
+          height: '600px',
+          zIndex: 1000,
+          boxShadow: 'var(--shadow-xl)',
+        }}>
+          <AiraChat onClose={() => setShowAira(false)} />
+        </div>
+      )}
       <div className="container" style={{ paddingTop: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <div>
             <h1 style={{ marginBottom: '8px' }}>HR Management System</h1>
             <p style={{ color: 'var(--text-secondary)' }}>Complete Human Resources Dashboard</p>
           </div>
-          <Link href="/" className="btn btn-ghost">
-            Home
-          </Link>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => setShowAira(!showAira)}
+              className="btn"
+              style={{
+                background: showAira ? 'var(--secondary-color)' : 'var(--primary-color)',
+                color: 'white',
+              }}
+            >
+              {showAira ? 'Close Aira' : 'Open Aira Assistant'}
+            </button>
+            <Link href="/" className="btn btn-ghost">
+              Home
+            </Link>
+          </div>
         </div>
 
         <div className="card" style={{ marginBottom: '24px' }}>
