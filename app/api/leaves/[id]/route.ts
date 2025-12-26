@@ -72,7 +72,7 @@ export async function PATCH(
     // Create notification for employee
     const { randomUUID } = require('crypto');
     await db.collection('notifications').insertOne({
-      _id: randomUUID(),
+      id: randomUUID(), // Custom ID field (MongoDB will auto-generate _id as ObjectId)
       employeeId: leaveRecord.employeeId || leaveRecord.employee_id,
       employeeName: leaveRecord.employeeName || leaveRecord.employee_name,
       type: `leave_${status}`,

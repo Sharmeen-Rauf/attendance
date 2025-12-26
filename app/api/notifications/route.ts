@@ -66,10 +66,21 @@ export async function PATCH(request: NextRequest) {
     }
 
     const db = await getDatabase();
-    const result = await db.collection('notifications').updateOne(
+    
+    // Try to find by _id (ObjectId) first, then by id (custom UUID)
+    let query: any = { employeeId };
+    let result = await db.collection('notifications').updateOne(
       { _id: notificationId, employeeId },
       { $set: { read: true, readAt: new Date() } }
     );
+
+    // If not found by _id, try id field
+    if (result.matchedCount === 0) {
+      result = await db.collection('notifications').updateOne(
+        { id: notificationId, employeeId },
+        { $set: { read: true, readAt: new Date() } }
+      );
+    }
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
@@ -110,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase();
     const notification = {
-      _id: require('crypto').randomUUID(),
+      id: require('crypto').randomUUID(), // Custom ID field (MongoDB will auto-generate _id as ObjectId)
       employeeId,
       employeeName: employeeName || null,
       type: type || 'general',

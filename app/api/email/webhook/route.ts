@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // Create leave record
     const leaveRecord = {
-      _id: randomUUID(),
+      id: randomUUID(), // Custom ID field (MongoDB will auto-generate _id as ObjectId)
       employeeId: employeeInfo.id,
       employeeName: employeeInfo.name,
       employeeEmail: from,
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     if (existingLeave) {
       return NextResponse.json({
         message: 'Leave request already exists',
-        leaveId: existingLeave._id,
+        leaveId: existingLeave._id || existingLeave.id,
       }, { status: 200 });
     }
 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     // Create notification for user
     await db.collection('notifications').insertOne({
-      _id: randomUUID(),
+      id: randomUUID(), // Custom ID field (MongoDB will auto-generate _id as ObjectId)
       employeeId: employeeInfo.id,
       employeeName: employeeInfo.name,
       type: 'leave_submitted',
@@ -113,9 +113,12 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
     });
 
+    // Get the inserted document to return the MongoDB _id
+    const insertedLeave = await db.collection('leave_records').findOne({ id: leaveRecord.id });
+    
     return NextResponse.json({
       message: 'Leave request created successfully',
-      leaveId: leaveRecord._id,
+      leaveId: insertedLeave?._id || leaveRecord.id,
       employeeName: employeeInfo.name,
     }, { status: 201 });
   } catch (error: any) {
