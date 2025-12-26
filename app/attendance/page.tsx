@@ -128,12 +128,12 @@ export default function AttendancePage() {
       const status = await getTodayStatus(employeeId);
       setTodayStatus(status);
       
-      if (status) {
-        // Update check-in status - only set if we have actual data
-        setCheckInTime(status.checkInTime || null);
-        setBreakInTime(status.breakInTime || null);
-        setBreakOutTime(status.breakOutTime || null);
-        setCheckOutTime(status.checkOutTime || null);
+      if (status && (status.checkInTime || status.breakInTime || status.checkOutTime)) {
+        // Only update if we have actual data from server
+        if (status.checkInTime) setCheckInTime(status.checkInTime);
+        if (status.breakInTime !== undefined) setBreakInTime(status.breakInTime || null);
+        if (status.breakOutTime !== undefined) setBreakOutTime(status.breakOutTime || null);
+        if (status.checkOutTime !== undefined) setCheckOutTime(status.checkOutTime || null);
         
         // Break-Out is enabled when: break started but not ended
         setCanBreakOut(!!status.breakInTime && !status.breakOutTime);
@@ -144,15 +144,9 @@ export default function AttendancePage() {
           !status.checkOutTime && 
           (!status.breakInTime || !!status.breakOutTime)
         );
-      } else {
-        // No status found - reset everything
-        setCheckInTime(null);
-        setBreakInTime(null);
-        setBreakOutTime(null);
-        setCheckOutTime(null);
-        setCanBreakOut(false);
-        setCanCheckOut(false);
       }
+      // Don't reset state if no status - prevents clearing state immediately after action submission
+      // State will remain from the immediate update in handleAction
     } catch (error) {
       console.error('Error loading today status:', error);
       // On error, don't clear state - might be temporary network issue
@@ -193,16 +187,16 @@ export default function AttendancePage() {
       const now = new Date().toISOString();
       if (action === 'checkin') {
         setCheckInTime(now);
-        setCanBreakOut(false);
-        setCanCheckOut(false);
+        setCanBreakOut(false); // Break-out is not enabled yet
+        setCanCheckOut(false); // Can't check out yet
       } else if (action === 'breakin') {
         setBreakInTime(now);
-        setCanBreakOut(true);
-        setCanCheckOut(false);
+        setCanBreakOut(true); // Now can break out
+        setCanCheckOut(false); // Can't check out while on break
       } else if (action === 'breakout') {
         setBreakOutTime(now);
-        setCanBreakOut(false);
-        setCanCheckOut(true);
+        setCanBreakOut(false); // Break is completed
+        setCanCheckOut(true); // Now can check out
       } else if (action === 'checkout') {
         setCheckOutTime(now);
         setCanBreakOut(false);
@@ -212,14 +206,33 @@ export default function AttendancePage() {
       if (isOnline()) {
         // Check if result has a message (e.g., "already checked in")
         if (result?.message) {
+          // If already checked in, use the server data
+          if (result.checkInTime) {
+            setCheckInTime(result.checkInTime);
+            setBreakInTime(result.breakInTime || null);
+            setBreakOutTime(result.breakOutTime || null);
+            setCheckOutTime(result.checkOutTime || null);
+            setCanBreakOut(!!result.breakInTime && !result.breakOutTime);
+            setCanCheckOut(!!result.checkInTime && !result.checkOutTime && (!result.breakInTime || !!result.breakOutTime));
+          }
           // Silently update status instead of showing error
           await loadTodayStatus();
         } else {
+          // Success - use server response data if available
+          if (result.checkInTime !== undefined) setCheckInTime(result.checkInTime || null);
+          if (result.breakInTime !== undefined) setBreakInTime(result.breakInTime || null);
+          if (result.breakOutTime !== undefined) setBreakOutTime(result.breakOutTime || null);
+          if (result.checkOutTime !== undefined) setCheckOutTime(result.checkOutTime || null);
+          
+          // Update button states based on server response
+          setCanBreakOut(!!result.breakInTime && !result.breakOutTime);
+          setCanCheckOut(!!result.checkInTime && !result.checkOutTime && (!result.breakInTime || !!result.breakOutTime));
+          
           setMessage({ type: 'success', text: `${action.toUpperCase()} recorded successfully!` });
-          // Reload status after successful submission to get server data
+          // Reload status after successful submission to ensure sync
           setTimeout(async () => {
             await loadTodayStatus();
-          }, 800);
+          }, 1000);
         }
       } else {
         const pending = getPendingAttendances();
@@ -237,14 +250,20 @@ export default function AttendancePage() {
         const now = new Date().toISOString();
         if (action === 'checkin') {
           setCheckInTime(now);
+          setCanBreakOut(false);
+          setCanCheckOut(false);
         } else if (action === 'breakin') {
           setBreakInTime(now);
           setCanBreakOut(true);
+          setCanCheckOut(false);
         } else if (action === 'breakout') {
           setBreakOutTime(now);
           setCanBreakOut(false);
+          setCanCheckOut(true);
         } else if (action === 'checkout') {
           setCheckOutTime(now);
+          setCanBreakOut(false);
+          setCanCheckOut(false);
         }
         
         const pending = getPendingAttendances();
