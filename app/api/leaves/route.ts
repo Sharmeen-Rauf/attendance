@@ -12,29 +12,42 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const employeeId = searchParams.get('employee_id');
+    const employeeId = searchParams.get('employeeId') || searchParams.get('employee_id');
     const status = searchParams.get('status');
-    const startDate = searchParams.get('start_date');
-    const endDate = searchParams.get('end_date');
+    const startDate = searchParams.get('startDate') || searchParams.get('start_date');
+    const endDate = searchParams.get('endDate') || searchParams.get('end_date');
 
     const db = await getDatabase();
-    let query: any = {};
+    const andConditions: any[] = [];
 
     if (employeeId) {
-      query.employee_id = employeeId;
+      andConditions.push({
+        $or: [
+          { employeeId },
+          { employee_id: employeeId }
+        ]
+      });
     }
 
     if (status) {
-      query.status = status;
+      andConditions.push({ status });
     }
 
     if (startDate && endDate) {
-      query.start_date = { $gte: startDate, $lte: endDate };
+      // Handle both field name formats for date range
+      andConditions.push({
+        $or: [
+          { startDate: { $gte: startDate, $lte: endDate } },
+          { start_date: { $gte: startDate, $lte: endDate } }
+        ]
+      });
     }
+
+    const query = andConditions.length > 0 ? { $and: andConditions } : {};
 
     const leaves = await db.collection('leave_records')
       .find(query)
-      .sort({ start_date: -1 })
+      .sort({ createdAt: -1, created_at: -1, appliedAt: -1, applied_at: -1 })
       .toArray();
 
     return NextResponse.json({ leaves });

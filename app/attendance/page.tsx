@@ -7,6 +7,7 @@ import { submitAttendance, getServerTime, isOnline, syncPendingAttendances, getT
 import { getPendingAttendances } from '@/lib/offlineStorage';
 import { format } from 'date-fns';
 import axios from 'axios';
+import NotificationBell from '@/app/components/NotificationBell';
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -361,7 +362,8 @@ export default function AttendancePage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ margin: 0 }}>Attendance System</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <NotificationBell employeeId={employeeId} />
           <Link href="/aira" className="btn" style={{ background: 'var(--secondary-color)', color: 'white', textDecoration: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>
             Aira Assistant
           </Link>

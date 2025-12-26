@@ -1,230 +1,179 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { format } from 'date-fns';
+import Link from 'next/link';
+
+interface Notification {
+  _id: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
 
 export default function NotificationsPage() {
-  const [status, setStatus] = useState<any>(null);
+  const router = useRouter();
+  const [employeeId, setEmployeeId] = useState('');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
-    fetchStatus();
-    // Refresh every 10 seconds
-    const interval = setInterval(fetchStatus, 10000);
-    return () => clearInterval(interval);
+    checkAuth();
   }, []);
 
-  const fetchStatus = async () => {
+  const checkAuth = async () => {
     try {
-      const response = await axios.get('/api/status/live');
-      setStatus(response.data);
-      setLastUpdate(new Date());
-      setLoading(false);
+      const response = await axios.get('/api/auth/me', {
+        withCredentials: true
+      });
+      
+      if (response.data.employee) {
+        const emp = response.data.employee;
+        setEmployeeId(emp.id);
+        loadNotifications(emp.id);
+      }
     } catch (error) {
-      console.error('Error fetching status:', error);
+      router.push('/login');
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const loadNotifications = async (empId: string) => {
+    try {
+      const response = await axios.get(`/api/notifications?employeeId=${empId}&unreadOnly=false`);
+      setNotifications(response.data.notifications || []);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    if (!employeeId) return;
+    
+    try {
+      await axios.patch('/api/notifications', {
+        notificationId,
+        employeeId,
+      });
+      loadNotifications(employeeId);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!employeeId) return;
+    
+    try {
+      const unreadNotifications = notifications.filter(n => !n.read);
+      await Promise.all(
+        unreadNotifications.map(n => 
+          axios.patch('/api/notifications', {
+            notificationId: n._id,
+            employeeId,
+          })
+        )
+      );
+      loadNotifications(employeeId);
+    } catch (error) {
+      console.error('Error marking all as read:', error);
     }
   };
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <div className="container">
-          <h1>📢 Live Notifications</h1>
-          <p>Loading...</p>
-        </div>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p>Loading...</p>
       </div>
     );
   }
 
-  if (!status) {
-    return (
-      <div style={{ padding: '20px' }}>
-        <div className="container">
-          <h1>📢 Live Notifications</h1>
-          <p>No data available</p>
-        </div>
-      </div>
-    );
-  }
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div className="container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>📢 Live Notifications</h1>
-          <div style={{ fontSize: '12px', color: '#666' }}>
-            Last updated: {format(lastUpdate, 'HH:mm:ss')}
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '15px',
-          marginBottom: '30px'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-            padding: '20px',
-            borderRadius: '12px',
-            color: 'white',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{status.checkedIn}</div>
-            <div style={{ fontSize: '14px', opacity: 0.9 }}>Checked In</div>
-          </div>
-
-          <div style={{
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            padding: '20px',
-            borderRadius: '12px',
-            color: 'white',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{status.onBreak}</div>
-            <div style={{ fontSize: '14px', opacity: 0.9 }}>On Break</div>
-          </div>
-
-          <div style={{
-            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            padding: '20px',
-            borderRadius: '12px',
-            color: 'white',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{status.checkedOut}</div>
-            <div style={{ fontSize: '14px', opacity: 0.9 }}>Checked Out</div>
-          </div>
-
-          <div style={{
-            background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-            padding: '20px',
-            borderRadius: '12px',
-            color: 'white',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{status.notCheckedIn}</div>
-            <div style={{ fontSize: '14px', opacity: 0.9 }}>Not Checked In</div>
-          </div>
-        </div>
-
-        {/* Checked In Employees */}
-        {status.employees.checkedIn.length > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h2 style={{ marginBottom: '15px', color: '#333' }}>✅ Checked In ({status.employees.checkedIn.length})</h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '15px'
-            }}>
-              {status.employees.checkedIn.map((emp: any) => (
-                <div key={emp.employeeId} style={{
-                  background: '#f8f9fa',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  border: '2px solid #28a745'
-                }}>
-                  <div style={{ fontWeight: '600', marginBottom: '5px' }}>{emp.employeeName}</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    Check-in: {emp.checkInTime ? format(new Date(emp.checkInTime), 'HH:mm:ss') : '-'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* On Break Employees */}
-        {status.employees.onBreak.length > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h2 style={{ marginBottom: '15px', color: '#333' }}>☕ On Break ({status.employees.onBreak.length})</h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '15px'
-            }}>
-              {status.employees.onBreak.map((emp: any) => {
-                const breakStart = emp.breakInTime ? new Date(emp.breakInTime) : null;
-                const breakDuration = breakStart ? Math.floor((new Date().getTime() - breakStart.getTime()) / 60000) : 0;
-                
-                return (
-                  <div key={emp.employeeId} style={{
-                    background: '#fff3cd',
-                    padding: '15px',
-                    borderRadius: '10px',
-                    border: '2px solid #ffc107'
-                  }}>
-                    <div style={{ fontWeight: '600', marginBottom: '5px' }}>{emp.employeeName}</div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      Break started: {breakStart ? format(breakStart, 'HH:mm:ss') : '-'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#856404', fontWeight: '600', marginTop: '5px' }}>
-                      Duration: {breakDuration} minutes
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Not Checked In */}
-        {status.employees.notCheckedIn.length > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h2 style={{ marginBottom: '15px', color: '#333' }}>⏰ Not Checked In ({status.employees.notCheckedIn.length})</h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '15px'
-            }}>
-              {status.employees.notCheckedIn.map((emp: any) => (
-                <div key={emp.employeeId} style={{
-                  background: '#f8f9fa',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  border: '2px solid #dee2e6'
-                }}>
-                  <div style={{ fontWeight: '600', marginBottom: '5px' }}>{emp.employeeName}</div>
-                  <div style={{ fontSize: '12px', color: '#999' }}>
-                    Expected: {emp.officeStartTime}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Checked Out */}
-        {status.employees.checkedOut.length > 0 && (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
+      <div className="container" style={{ paddingTop: '32px', paddingBottom: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
-            <h2 style={{ marginBottom: '15px', color: '#333' }}>🏁 Checked Out ({status.employees.checkedOut.length})</h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '15px'
-            }}>
-              {status.employees.checkedOut.map((emp: any) => (
-                <div key={emp.employeeId} style={{
-                  background: '#e7f3ff',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  border: '2px solid #007bff'
-                }}>
-                  <div style={{ fontWeight: '600', marginBottom: '5px' }}>{emp.employeeName}</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    Check-out: {emp.checkOutTime ? format(new Date(emp.checkOutTime), 'HH:mm:ss') : '-'}
+            <h1 style={{ marginBottom: '8px' }}>Notifications</h1>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {unreadCount > 0 && (
+              <button onClick={markAllAsRead} className="btn btn-outline">
+                Mark All as Read
+              </button>
+            )}
+            <Link href="/" className="btn btn-ghost">
+              Back to Home
+            </Link>
+          </div>
+        </div>
+
+        <div className="card">
+          {notifications.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
+              <p>No notifications yet</p>
+            </div>
+          ) : (
+            <div>
+              {notifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  onClick={() => !notification.read && markAsRead(notification._id)}
+                  style={{
+                    padding: '16px',
+                    borderBottom: '1px solid var(--border-color)',
+                    cursor: notification.read ? 'default' : 'pointer',
+                    background: notification.read ? 'transparent' : '#f0f9ff',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!notification.read) {
+                      e.currentTarget.style.background = '#e0f2fe';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!notification.read) {
+                      e.currentTarget.style.background = '#f0f9ff';
+                    }
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                    <div style={{ fontWeight: notification.read ? '500' : '600', fontSize: '16px' }}>
+                      {notification.title}
+                    </div>
+                    {!notification.read && (
+                      <span style={{
+                        background: 'var(--primary-color)',
+                        color: 'white',
+                        borderRadius: '50%',
+                        width: '8px',
+                        height: '8px',
+                        display: 'inline-block',
+                      }} />
+                    )}
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                    {notification.message}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    {format(new Date(notification.createdAt), 'dd MMM yyyy, hh:mm a')}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 }
-

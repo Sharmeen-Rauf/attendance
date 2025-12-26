@@ -26,9 +26,32 @@ export async function PATCH(
     }
 
     const db = await getDatabase();
+    
+    // Try to find by id field first, if not found try _id as ObjectId
+    let query: any = { id };
+    let leaveRecord = await db.collection('leave_records').findOne(query);
+
+    // If not found by id field, try _id
+    if (!leaveRecord) {
+      try {
+        const objectId = new ObjectId(id);
+        leaveRecord = await db.collection('leave_records').findOne({ _id: objectId });
+        query = { _id: objectId };
+      } catch (error) {
+        // Invalid ObjectId format
+      }
+    }
+
+    if (!leaveRecord) {
+      return NextResponse.json(
+        { error: 'Leave record not found' },
+        { status: 404 }
+      );
+    }
+
     const updateData: any = {
       status,
-      updated_at: new Date(),
+      updatedAt: new Date(),
     };
 
     if (remarks) {
@@ -36,42 +59,37 @@ export async function PATCH(
     }
 
     if (status === 'approved') {
-      updateData.approved_at = new Date();
+      updateData.approvedAt = new Date();
     } else {
-      updateData.rejected_at = new Date();
+      updateData.rejectedAt = new Date();
     }
 
-    // Try to find by id field first, if not found try _id as ObjectId
-    let query: any = { id };
     const result = await db.collection('leave_records').updateOne(
       query,
       { $set: updateData }
     );
 
-    // If not found by id field, try ObjectId
-    if (result.matchedCount === 0) {
+    // Create notification for employee
+    const { randomUUID } = require('crypto');
+    await db.collection('notifications').insertOne({
+      _id: randomUUID(),
+      employeeId: leaveRecord.employeeId || leaveRecord.employee_id,
+      employeeName: leaveRecord.employeeName || leaveRecord.employee_name,
+      type: `leave_${status}`,
+      title: `Leave Request ${status === 'approved' ? 'Approved' : 'Rejected'}`,
+      message: `Your ${leaveRecord.type || leaveRecord.leave_type || 'leave'} request for ${leaveRecord.startDate || leaveRecord.start_date}${(leaveRecord.endDate || leaveRecord.end_date) && (leaveRecord.endDate || leaveRecord.end_date) !== (leaveRecord.startDate || leaveRecord.start_date) ? ` to ${leaveRecord.endDate || leaveRecord.end_date}` : ''} has been ${status === 'approved' ? 'approved' : 'rejected'}.${remarks ? ` Remarks: ${remarks}` : ''}`,
+      read: false,
+      createdAt: new Date(),
+    });
+
+    // Send email notification if email exists (can be implemented later)
+    const employeeEmail = leaveRecord.employeeEmail || leaveRecord.email;
+    if (employeeEmail) {
       try {
-        const objectId = new ObjectId(id);
-        const resultById = await db.collection('leave_records').updateOne(
-          { _id: objectId },
-          { $set: updateData }
-        );
-        if (resultById.matchedCount === 0) {
-          return NextResponse.json(
-            { error: 'Leave record not found' },
-            { status: 404 }
-          );
-        }
-        return NextResponse.json({ 
-          message: `Leave request ${status}`,
-          modified: resultById.modifiedCount > 0 
-        });
+        console.log(`Sending ${status} notification email to ${employeeEmail}`);
+        // Email sending logic can be added here
       } catch (error) {
-        // Invalid ObjectId format
-        return NextResponse.json(
-          { error: 'Leave record not found' },
-          { status: 404 }
-        );
+        console.error('Error sending email notification:', error);
       }
     }
 

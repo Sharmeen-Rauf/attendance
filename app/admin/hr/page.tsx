@@ -358,38 +358,49 @@ export default function HRAdminPage() {
                         <th>End Date</th>
                         <th>Days</th>
                         <th>Reason</th>
+                        <th>Source</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {leaves.map((leave: any) => (
-                        <tr key={leave._id || leave.id}>
-                          <td>{leave.employee_name}</td>
-                          <td>{leave.leave_type}</td>
-                          <td>{format(new Date(leave.start_date), 'dd MMM yyyy')}</td>
-                          <td>{format(new Date(leave.end_date), 'dd MMM yyyy')}</td>
-                          <td>{leave.days}</td>
-                          <td>{leave.reason}</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <button
-                                onClick={() => handleLeaveAction(leave.id || leave._id, 'approved')}
-                                className="btn btn-secondary"
-                                style={{ padding: '6px 12px', fontSize: '12px' }}
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleLeaveAction(leave.id || leave._id, 'rejected')}
-                                className="btn btn-ghost"
-                                style={{ padding: '6px 12px', fontSize: '12px' }}
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {leaves.map((leave: any) => {
+                        const employeeName = leave.employeeName || leave.employee_name;
+                        const leaveType = leave.type || leave.leave_type;
+                        const startDate = leave.startDate || leave.start_date;
+                        const endDate = leave.endDate || leave.end_date;
+                        const reason = leave.reason || '';
+                        const source = leave.source === 'email' ? '📧 Email' : 'System';
+                        
+                        return (
+                          <tr key={leave._id || leave.id}>
+                            <td>{employeeName}</td>
+                            <td>{leaveType}</td>
+                            <td>{format(new Date(startDate), 'dd MMM yyyy')}</td>
+                            <td>{format(new Date(endDate || startDate), 'dd MMM yyyy')}</td>
+                            <td>{leave.days || 1}</td>
+                            <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={reason}>{reason}</td>
+                            <td>{source}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  onClick={() => handleLeaveAction(leave.id || leave._id, 'approved')}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleLeaveAction(leave.id || leave._id, 'rejected')}
+                                  className="btn btn-ghost"
+                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
